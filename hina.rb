@@ -7,11 +7,39 @@ Bundler.require(:default, APP_ENVIRONMENT)
 
 require 'net/http'
 
+Groonga::Database.open "#{APP_ROOT}/db/hina.db"
 
 module Hina
 
   module Models
     class Thread
+
+      class << self
+        @@table = Groonga[:Thread]
+
+        def get(id, include_posts=true)
+          record = @@table[id]
+          if record.nil?
+            return nil
+          else
+            thread = Thread.new(id, :title=>record['title'])
+            if include_posts
+              record[:posts].each do |post|
+                thread.add_post Post[post.key]
+              end
+            else
+              thread.created_date = record[:created_date]
+              thread.lastpost_date = record[:lastpost_date]
+            end
+            return thread
+          end
+        end
+
+        def [](id)
+          return self.get(id, true)
+        end
+      end
+
       def initialize(id, title:nil, posts:[])
         @id = id
         @title = title
@@ -25,8 +53,9 @@ module Hina
       def add_post(post)
         post.thread_id = @id
         post.post_number = @posts.size
-        @posts << post
+        @created_date = post.post_date if @posts.empty?
         @lastpost_date = post.post_date
+        @posts << post
       end
 
       attr_accessor :id, :title, :created_date, :lastpost_date
@@ -34,16 +63,31 @@ module Hina
     end
 
     class Post
+
+      class << self
+        @@table = Groonga[:Post]
+
+        def [](record_key)
+          record = @@table[record_key]
+          if record.nil?
+            return nil
+          else
+            return Post.new :author=>record[:author], :author_hash=>record[:author_hash], :mail=>record['mail'],
+                :post_date=>record[:post_date], :contents=>record[:contents]
+          end
+        end
+      end
+
       def initialize(thread_id:nil, post_number:nil, visible:false,
-          author:nil, author_hash:nil, mail:nil, post_date:nil, content:nil)
+          author:nil, author_hash:nil, mail:nil, post_date:nil, contents:nil)
         @author = author
         @author_hash = author_hash
         @mail = mail
         @post_date = post_date
-        @content = content
+        @contents = contents
         @visible = visible
       end
-      attr_accessor :thread_id, :post_number, :visible, :author, :author_hash, :mail, :post_date, :content
+      attr_accessor :thread_id, :post_number, :visible, :author, :author_hash, :mail, :post_date, :contents
     end
   end
 
@@ -68,7 +112,7 @@ module Hina
         raise InvalidDatFormatError.new "#{fragments.to_s}/#{thread.posts.size}" if fragments.size < 4
 
         thread = Models::Thread.new(thread_id, title:fragments[-1].strip!) if thread.nil?
-        post = Models::Post.new(author:fragments[0], mail:fragments[1], content:fragments[3])
+        post = Models::Post.new(author:fragments[0], mail:fragments[1], contents:fragments[3])
         if %r!(\d+)/(\d+)/(\d+)\(.+\)\s+(\d+):(\d+):(\d+)\.(\d+)\s+ID:(\S+)! === fragments[2]
           post.post_date = Time.local($1, $2, $3, $4, $5, $6, "#{$7}0000")
           post.author_hash = $8

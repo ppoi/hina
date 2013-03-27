@@ -28,6 +28,7 @@ namespace :grn do
         schema.create_table 'Post', :type=>:hash, :key_type=>'short_text' do |table|
           table.short_text 'author'
           table.short_text 'author_hash'
+          table.short_text 'mail'
           table.time 'post_date'
           table.text 'contents'
         end

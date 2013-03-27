@@ -1,3 +1,4 @@
 Gemfile.lock
 .bundle
 db
+spec/sandbox_spec.rb

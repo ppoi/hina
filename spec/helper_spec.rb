@@ -21,11 +21,11 @@ describe 'ThreadHelper' do
   end
 
   it 'parse dat' do
-    dat = File.open("#{APP_ROOT}/tmp/1355062957.dat", "r") do |file|
+    dat = File.open("#{APP_ROOT}/spec/dat/1355062957.dat", "r") do |file|
       file.set_encoding(Encoding::SJIS, Encoding::UTF_8, :invalid=>:replace)
       file.read
     end
-    thread = helpers.parse_dat('vip4ssnip1234', dat)
+    thread = helpers.parse_dat('vip4ssnip1355062957', dat)
     thread.title.should eq "【咲SS】　京太郎「鹿児島で巫女さん！」　初美「13スレ目、幸せでした……」【安価】"
     thread.posts[0].post_date.strftime('%Y/%m/%d %H:%M:%S.%-2L').should eq "2012/12/09 23:22:38.13"
     thread.posts.should have(1000).items
