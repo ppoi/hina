@@ -12,82 +12,152 @@ Groonga::Database.open "#{APP_ROOT}/db/hina.db"
 module Hina
 
   module Models
-    class Thread
-
+    class Base
       class << self
-        @@table = Groonga[:Thread]
+        @@entity_map = {}
 
-        def get(id, include_posts=true)
-          record = @@table[id]
-          if record.nil?
-            return nil
-          else
-            thread = Thread.new(id, :title=>record['title'])
-            if include_posts
-              record[:posts].each do |post|
-                thread.add_post Post[post.key]
-              end
-            else
-              thread.created_date = record[:created_date]
-              thread.lastpost_date = record[:lastpost_date]
+        def inherited(subclass)
+          table_name = subclass.name.split('::')[-1].to_sym
+          table = Groonga[table_name]
+          columns = table.columns
+          attributes = []
+          columns.each do |column|
+            next if column.index?
+            column_name = column.local_name.to_sym
+            attributes << column_name
+            define_method column_name do
+              @values[column_name]
             end
-            return thread
+            define_method "#{column_name}=" do |value|
+              @modified_attributes << column_name unless @modified_attributes.nil? or @modified_attributes.include? column_name
+              @values[column_name] = value
+            end
+          end
+          subclass.class_variable_set(:@@table_name, table_name)
+          subclass.class_variable_set(:@@table, table)
+          subclass.class_variable_set(:@@attributes, attributes)
+          @@entity_map[table_name] = subclass
+        end
+
+        def table_name
+          class_variable_get(:@@table_name)
+        end
+
+        def attributes
+          class_variable_get(:@@attributes)
+        end
+
+        def table
+          class_variable_get(:@@table)
+        end
+
+        def [](key)
+          record = Groonga[table_name][key]
+          new record unless record.nil?
+        end
+
+        def select(&block)
+          table = Groonga[table_name]
+          query_result = table.select(&block)
+          result_list = []
+          query_result.each do |record|
+            result_list << new(record)
+          end
+          result_list
+        end
+      end
+
+      def initialize(*args)
+        if args.first.is_a? Groonga::Record
+          record = args.first
+          @key = record._key
+          @values = {}
+          self.class.attributes.each do |attr|
+            value = record[attr]
+            column = self.class.table.column(attr)
+            if column.reference?
+              entity_class = @@entity_map[column.range.name.to_sym]
+              if column.vector?
+                value = value.map {|subrecord| entity_class.new(subrecord) }
+              else
+                value = entity_class.new(value)
+              end
+            end
+            @values[attr] = value
+          end
+          @stored = true
+          @modified_attribtues = []
+        else
+          @key = args.first
+          @values = args[1]
+          @storead = false
+        end
+      end
+
+      def key
+        @key
+      end
+
+      def save
+        @stored ? update : create
+      end
+
+      def create
+        values = {}
+        @values.each do |key, value|
+          next if value.nil?
+          column = self.class.table.column key
+          if column.reference?
+            if column.vector?
+              value = value.map {|item| item.key}
+            else
+              value = value.key
+            end
+          end
+          values[key] = value
+        end
+        self.class.table.add @key, values
+        @stored = true
+      end
+
+      def update
+        unless @modified_attributes.nil? or @modified_attributes.empty?
+          record = self.class.table[@key]
+          @modified_attributes.each do |attr|
+            value = @values[attr]
+            column = self.class.table.column attr
+            if not value.nil? and column.reference?
+              if column.vector?
+                value = value.map {|item| item.key }
+              else
+                value = value.key
+              end
+            end
+            record[attr] = value
           end
         end
-
-        def [](id)
-          return self.get(id, true)
-        end
       end
 
-      def initialize(id, title:nil, posts:[])
-        @id = id
-        @title = title
-        @posts = posts
-        if posts.size > 0
-          @created_date = posts[0].post_date
-          @lastpost_date = posts[-1].post_date
-        end
+      def delete
+        Groonga[table_name].delete(key)
       end
-
-      def add_post(post)
-        post.thread_id = @id
-        post.post_number = @posts.size
-        @created_date = post.post_date if @posts.empty?
-        @lastpost_date = post.post_date
-        @posts << post
-      end
-
-      attr_accessor :id, :title, :created_date, :lastpost_date
-      attr_reader :posts
     end
 
-    class Post
+    class Thread < Base
 
-      class << self
-        @@table = Groonga[:Post]
-
-        def [](record_key)
-          record = @@table[record_key]
-          if record.nil?
-            return nil
-          else
-            return Post.new :author=>record[:author], :author_hash=>record[:author_hash], :mail=>record['mail'],
-                :post_date=>record[:post_date], :contents=>record[:contents]
-          end
+      def add_post(post={})
+        posts = self.posts || []
+        if post.is_a? Hash
+          post = Post.new "#{key}:#{posts.size + 1}", post
         end
+        self.created_date = post.post_date if created_date.nil?
+        self.lastpost_date = post.post_date
+        self.posts = (posts << post)
+        self.post_count = posts.size
       end
+    end
 
-      def initialize(thread_id:nil, post_number:nil, visible:false,
-          author:nil, author_hash:nil, mail:nil, post_date:nil, contents:nil)
-        @author = author
-        @author_hash = author_hash
-        @mail = mail
-        @post_date = post_date
-        @contents = contents
-        @visible = visible
-      end
-      attr_accessor :thread_id, :post_number, :visible, :author, :author_hash, :mail, :post_date, :contents
+    class Post < Base
     end
   end
 
@@ -112,10 +182,10 @@ module Hina
         raise InvalidDatFormatError.new "#{fragments.to_s}/#{thread.posts.size}" if fragments.size < 4
 
         thread = Models::Thread.new(thread_id, title:fragments[-1].strip!) if thread.nil?
-        post = Models::Post.new(author:fragments[0], mail:fragments[1], contents:fragments[3])
+        post = { author:fragments[0], mail:fragments[1], contents:fragments[3] }
         if %r!(\d+)/(\d+)/(\d+)\(.+\)\s+(\d+):(\d+):(\d+)\.(\d+)\s+ID:(\S+)! === fragments[2]
-          post.post_date = Time.local($1, $2, $3, $4, $5, $6, "#{$7}0000")
-          post.author_hash = $8
+          post[:post_date] = Time.local($1, $2, $3, $4, $5, $6, "#{$7}0000")
+          post[:author_hash] = $8
         elsif thread.posts.size >= 1000
           break
         else
