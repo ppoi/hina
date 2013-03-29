@@ -15,8 +15,7 @@ describe 'Hina::Models' do
 
   describe 'Base' do
     it 'extends Subclass' do
-      Hina::Models::Thread.table_name.should eq :Thread
-      Hina::Models::Post.table_name.should eq :Post
+      
     end
   end
 
@@ -81,9 +80,17 @@ describe 'Hina::Models' do
         record.posts.contents =~ '鏡音'
       end
       result.should have(3).items
-      result.each do |record|
-        p record
+
+      result = Hina::Models::Thread.select(:model_excludes=>[:posts, :tags]) do |record|
+        record.posts.contents =~ '初音ミク'
       end
+      result.should have(2).items
+      result.each do |record|
+        record.posts.should be_nil
+      end
+
+      result = Hina::Models::Thread.select
+      result.should have(4).items
     end
   end
 end

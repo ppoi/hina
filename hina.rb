@@ -5,78 +5,95 @@ require 'rubygems'
 require 'bundler/setup'
 Bundler.require(:default, APP_ENVIRONMENT)
 
+require 'json'
 require 'net/http'
 
 Groonga::Database.open "#{APP_ROOT}/db/hina.db"
 
 module Hina
 
-  module Models
-    class Base
-      class << self
-        @@entity_map = {}
+  class Model
 
-        def inherited(subclass)
-          table_name = subclass.name.split('::')[-1].to_sym
-          table = Groonga[table_name]
-          columns = table.columns
-          attributes = []
-          columns.each do |column|
-            next if column.index?
-            column_name = column.local_name.to_sym
-            attributes << column_name
-            define_method column_name do
-              @values[column_name]
-            end
-            define_method "#{column_name}=" do |value|
-              @modified_attributes << column_name unless @modified_attributes.nil? or @modified_attributes.include? column_name
-              @values[column_name] = value
-            end
-          end
-          subclass.class_variable_set(:@@table_name, table_name)
-          subclass.class_variable_set(:@@table, table)
-          subclass.class_variable_set(:@@attributes, attributes)
-          @@entity_map[table_name] = subclass
+    module ModelExtensionMethods
+
+      def entity_map
+        @@entity_map ||= {}
+      end
+
+      def inherited(subclass)
+        super
+        table_name = subclass.name.split('::')[-1].to_sym
+        table = Groonga[table_name]
+        subclass.setup_model(table)
+        entity_map[table_name] = subclass
+      end
+
+      protected
+      def setup_model(table)
+        @table = table
+        @attributes = table.columns.map do |column|
+          attr_name = column.local_name.to_sym
+          define_attribute(attr_name)
+          attr_name
         end
+        extend ClassMethods
+        include InstanceMethods
+      end
 
-        def table_name
-          class_variable_get(:@@table_name)
+      def define_attribute(name)
+        define_method name do
+          @values[name]
         end
-
-        def attributes
-          class_variable_get(:@@attributes)
-        end
-
-        def table
-          class_variable_get(:@@table)
-        end
-
-        def [](key)
-          record = Groonga[table_name][key]
-          new record unless record.nil?
-        end
-
-        def select(&block)
-          table = Groonga[table_name]
-          query_result = table.select(&block)
-          result_list = []
-          query_result.each do |record|
-            result_list << new(record)
-          end
-          result_list
+        define_method "#{name}=" do |value|
+          @modified_attributes << name unless @modified_attributes.nil? or @modified_attributes.include? name
+          @values[name] = value
         end
       end
+    end
+
+    module ClassMethods
+      attr_reader :table, :attributes
+
+      def [](key)
+        record = table[key]
+        record.nil? ? nil : new(record)
+      end
+
+      def select(options={}, &block)
+        groonga_options = options.reject {|k,v| k.to_s.start_with?('model_')}
+        table.select(groonga_options, &block).map do |record|
+          new(record, options)
+        end
+      end
+    end
+
+    module InstanceMethods
+      attr_reader :key
 
       def initialize(*args)
         if args.first.is_a? Groonga::Record
-          record = args.first
+          sync(*args)
+        else
+          @key = args.first
+          @values = args[1]
+          @storead = false
+        end
+      end
+
+      def sync(record=nil, options={})
+        if @stored and record.nil?
+          record = self.class.table[key]
+        end
+        unless record.nil?
           @key = record._key
           @values = {}
-          self.class.attributes.each do |attr|
+          target_attributes = options[:model_includes] || self.class.attributes
+          target_attributes -= options[:model_excludes] if options.has_key?(:model_excludes)
+          target_attributes.each do |attr|
             value = record[attr]
             column = self.class.table.column(attr)
             if column.reference?
-              entity_class = @@entity_map[column.range.name.to_sym]
+              entity_class = self.class.entity_map[column.range.name.to_sym]
               if column.vector?
                 value = value.map {|subrecord| entity_class.new(subrecord) }
               else
@@ -87,15 +104,7 @@ module Hina
           end
           @stored = true
           @modified_attribtues = []
-        else
-          @key = args.first
-          @values = args[1]
-          @storead = false
         end
-      end
-
-      def key
-        @key
       end
 
       def save
@@ -122,7 +131,7 @@ module Hina
 
       def update
         unless @modified_attributes.nil? or @modified_attributes.empty?
-          record = self.class.table[@key]
+          record = self.class.table[key]
           @modified_attributes.each do |attr|
             value = @values[attr]
             column = self.class.table.column attr
@@ -139,11 +148,21 @@ module Hina
       end
 
       def delete
-        Groonga[table_name].delete(key)
+        self.class.delete(key)
+      end
+
+      def to_json
+        values = @values.dup
+        values[:key] = key
+        values.to_json
       end
     end
 
-    class Thread < Base
+    extend ModelExtensionMethods
+  end
+
+  module Models
+    class Thread < Hina::Model
 
       def add_post(post={})
         posts = self.posts || []
@@ -157,7 +176,7 @@ module Hina
       end
     end
 
-    class Post < Base
+    class Post < Hina::Model
     end
   end
 
