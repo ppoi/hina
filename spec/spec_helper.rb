@@ -2,7 +2,7 @@ APP_ENVIRONMENT = :test
 require File.expand_path('../../hina', __FILE__)
 
 def truncate_tables
-  ['Thread','Post','Tag'].each do |table|
+  ['Thread','Post'].each do |table|
     Groonga[table].truncate
   end
 end

@@ -10,6 +10,14 @@ require 'net/http'
 
 Groonga::Database.open "#{APP_ROOT}/db/hina.db"
 
+class Time
+
+  def to_json(*a)
+    "\"#{strftime('%Y/%m/%d %H:%M:%S.%-2L')}\""
+  end
+
+end
+
 module Hina
 
   class Model
@@ -54,9 +62,9 @@ module Hina
     module ClassMethods
       attr_reader :table, :attributes
 
-      def [](key)
+      def [](key, options={})
         record = table[key]
-        record.nil? ? nil : new(record)
+        record.nil? ? nil : new(record, options)
       end
 
       def select(options={}, &block)
@@ -90,8 +98,9 @@ module Hina
           target_attributes = options[:model_includes] || self.class.attributes
           target_attributes -= options[:model_excludes] if options.has_key?(:model_excludes)
           target_attributes.each do |attr|
-            value = record[attr]
             column = self.class.table.column(attr)
+            next if column.index?
+            value = record[attr]
             if column.reference?
               entity_class = self.class.entity_map[column.range.name.to_sym]
               if column.vector?
@@ -151,7 +160,7 @@ module Hina
         self.class.delete(key)
       end
 
-      def to_json
+      def to_json(*a)
         values = @values.dup
         values[:key] = key
         values.to_json
@@ -182,16 +191,76 @@ module Hina
 
   module ThreadHelper
 
+    class DatURL < URI::HTTP
+      def initialize(thread_url, archived=false)
+        if not thread_url.is_a? URI::Generic
+          thread_url = URI.parse thread_url.to_s
+        end
+
+        if thread_url.query.nil?
+          paths = thread_url.path.split '/'
+          if paths.size < 2
+            raise URI::InvalidURIError
+          end
+          @board_name = paths[-2]
+          @thread_id = paths[-1]
+          @thread_url = thread_url
+        else
+          q = Hash[URI.decode_www_form(thread_url.query)]
+          unless q.has_key?('board') and q.has_key?('dat')
+            raise URI::InvalidURIError
+          end
+          @board_name = q['board']
+          @thread_id = q['dat']
+          @thread_url = thread_url.merge("/test/read.cgi/#{@board_name}/#{@thread_id}/")
+        end
+
+        @archived = archived
+        path = archived ? "/#{board_name}/kako/#{thread_id[0,4]}/#{thread_id[0,5]}/#{thread_id}.dat"
+                        : "/#{board_name}/dat/#{thread_id}.dat"
+        super thread_url.scheme, thread_url.userinfo, thread_url.host, thread_url.port, nil, path, nil, nil, nil, false
+      end
+
+      def archived!
+        unless archived?
+          self.path = "/#{board_name}/kako/#{thread_id[0,4]}/#{thread_id[0,5]}/#{thread_id}.dat"
+          @archived = true
+        end
+        self
+      end
+
+      def archived?
+        @archived
+      end
+
+      attr_accessor :thread_id, :board_name, :thread_url
+    end
+
     class InvalidDatFormatError < Exception
     end
 
-    def request(source_url)
-      url = get_dat_url source_url
-      request = Net::HTTP::Get.new(url.path)
-      response = Net::HTTP.start url.host, url.port do |http|
-        http.request(request)
+    def get_dat(url, modified_since=nil)
+      if url.is_a? String
+        url = URI.parse url
       end
-      return response.body
+      p modified_since
+      req = Net::HTTP::Get.new(url.path)
+      req['If-Modified-Since'] = modified_since.httpdate unless modified_since.nil?
+      p req['If-Modified-Since']
+      http = Net::HTTP.new(url.host, url.port)
+      #http.set_debug_output(STDOUT)
+      res = http.start do |http|
+        http.request(req)
+      end
+      if res.is_a? Net::HTTPOK
+        res.body.encode(Encoding::UTF_8, Encoding::Windows_31J, :invalid=>:replace, :undef=>:replace)
+      elsif res.is_a? Net::HTTPFound
+        get_dat(res['Location'])
+      elsif res.is_a? Net::HTTPNotModified
+        nil
+      else
+        res.value
+      end
     end
 
     def parse_dat(thread_id, dat)
@@ -201,7 +270,7 @@ module Hina
         raise InvalidDatFormatError.new "#{fragments.to_s}/#{thread.posts.size}" if fragments.size < 4
 
         thread = Models::Thread.new(thread_id, title:fragments[-1].strip!) if thread.nil?
-        post = { author:fragments[0], mail:fragments[1], contents:fragments[3] }
+        post = { author:fragments[0].gsub(%r@</b>\s*(◆.*)<b>@, '\1'), mail:fragments[1], contents:fragments[3] }
         if %r!(\d+)/(\d+)/(\d+)\(.+\)\s+(\d+):(\d+):(\d+)\.(\d+)\s+ID:(\S+)! === fragments[2]
           post[:post_date] = Time.local($1, $2, $3, $4, $5, $6, "#{$7}0000")
           post[:author_hash] = $8
@@ -215,57 +284,81 @@ module Hina
       return thread
     end
 
-    def get_dat_url(source_url, archived=false)
-      if not source_url.is_a? URI::Generic
-        source_url = URI.parse source_url.to_s
+    def get_thread(source_url, modified_since=nil)
+      dat_url = ThreadHelper::DatURL.new source_url
+      thread_id = "#{dat_url.board_name}:#{dat_url.thread_id}"
+      dat = nil
+      begin
+        p "#{dat_url} #{modified_since}"
+        dat = get_dat(dat_url, modified_since)
+      rescue Net::HTTPExceptions=>e
+        p "NotFound!: #{e}"
+        dat = get_dat(dat_url.archived!)
       end
 
-      path = source_url.path.split '/'
-      if path.size < 2
-        raise URI::InvalidURIError
-      end
-      board_name = path[-2]
-      thread_id = path[-1]
-      if archived
-        source_url.merge "/#{board_name}/kako/#{thread_id[0,4]}/#{thread_id[0,5]}/#{thread_id}.dat"
+      unless dat.nil?
+        p "Found: #{dat_url}"
+        thread = parse_dat(thread_id, dat)
+        thread.archived = dat_url.archived?
+        thread.source_url = dat_url.thread_url.to_s
+        thread
       else
-        source_url.merge "/#{board_name}/dat/#{thread_id}.dat"
+        p 'Not Modified' 
+        nil
       end
     end
-
   end
 
   class Application < Sinatra::Base
 
-    helpers do
-      include ThreadHelper
+    helpers Sinatra::JSON, ThreadHelper
+
+    configure do
+      set :json_encoder, :to_json
     end
 
+
     get '/thread' do
+      threadlist = Models::Thread.select(:model_excludes=>[:posts])
+      json :count=>threadlist.size, :threadlist=>threadlist
     end
 
     get '/thread/:thread_id' do
+      thread_id = params[:thread_id]
+      thread = Models::Thread[thread_id, :model_excludes=>[:posts]]
+      if thread.nil?
+        404
+      end
+      if thread.archived
+        thread.sync
+      else
+        latest = get_thread(thread.source_url, thread.lastpost_date)
+        if not latest.nil? and thread.archived != latest.archived and thread.post_count != latest.post_count
+          added_post_count = latest.post_count - thread.post_count
+          if added_post_count > 0
+            latest.posts[thread.post_count, added_post_count].each do |post|
+              post.save
+            end
+            thread.lastpost_date = latest.lastpost_date
+            thread.post_count = latest.post_count
+            thread.posts = latest.posts
+          end
+          thread.archived = latest.archived unless thread.archived == latest.archived
+          thread.save
+        else
+          thread.sync
+        end
+      end
+      json thread
     end
 
     put '/thread' do
-    end
-
-    post '/thread/:thread_id' do
-    end
-
-    get '/tag' do
-    end
-
-    get '/tag/:tag_name' do
-    end
-
-    put '/tag' do
-    end
-
-    post '/tag/:tag_name' do
-    end
-
-    delete '/tag/:tag_name' do
+      thread = get_thread(params[:source_url])
+      thread.posts.each do |post|
+        post.save
+      end
+      thread.save
+      json :key=>thread.key, :title=>thread.title, :post_count=>thread.post_count
     end
 
   end
