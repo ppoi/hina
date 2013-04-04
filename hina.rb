@@ -207,10 +207,10 @@ module Hina
           @thread_url = thread_url
         else
           q = Hash[URI.decode_www_form(thread_url.query)]
-          unless q.has_key?('board') and q.has_key?('dat')
+          unless q.has_key?('bbs') and q.has_key?('dat')
             raise URI::InvalidURIError
           end
-          @board_name = q['board']
+          @board_name = q['bbs']
           @thread_id = q['dat']
           @thread_url = thread_url.merge("/test/read.cgi/#{@board_name}/#{@thread_id}/")
         end
@@ -243,15 +243,14 @@ module Hina
       if url.is_a? String
         url = URI.parse url
       end
-      p modified_since
       req = Net::HTTP::Get.new(url.path)
       req['If-Modified-Since'] = modified_since.httpdate unless modified_since.nil?
-      p req['If-Modified-Since']
       http = Net::HTTP.new(url.host, url.port)
       #http.set_debug_output(STDOUT)
       res = http.start do |http|
         http.request(req)
       end
+      p "request to <#{url}>, return #{res.code}"
       if res.is_a? Net::HTTPOK
         res.body.encode(Encoding::UTF_8, Encoding::Windows_31J, :invalid=>:replace, :undef=>:replace)
       elsif res.is_a? Net::HTTPFound
@@ -289,10 +288,8 @@ module Hina
       thread_id = "#{dat_url.board_name}:#{dat_url.thread_id}"
       dat = nil
       begin
-        p "#{dat_url} #{modified_since}"
         dat = get_dat(dat_url, modified_since)
       rescue Net::HTTPExceptions=>e
-        p "NotFound!: #{e}"
         dat = get_dat(dat_url.archived!)
       end
 

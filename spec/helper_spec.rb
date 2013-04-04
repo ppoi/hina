@@ -32,7 +32,7 @@ describe 'ThreadHelper' do
     end
 
     it 'create from mobile url' do
-      source = 'http://ex14.vip2ch.com/i/response.html?board=news4ssnip&dat=1364129784'
+      source = 'http://ex14.vip2ch.com/i/response.html?bbs=news4ssnip&dat=1364129784'
       url = Hina::ThreadHelper::DatURL.new(source)
       url.to_s.should eq 'http://ex14.vip2ch.com/news4ssnip/dat/1364129784.dat'
       url.thread_id.should eq '1364129784'
