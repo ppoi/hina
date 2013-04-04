@@ -7,5 +7,9 @@ require 'rubygems'
 require 'bundler/setup'
 Bundler.require(:default, APP_ENVIRONMENT)
 
-Groonga::Database.open "#{APP_ROOT}/db/hina.db"
+require 'hina/logging'
+require 'hina/groonga'
 
+require "#{APP_ROOT}/config/settings"
+
+logging.info('Application boot process finished.')

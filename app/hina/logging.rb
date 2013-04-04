@@ -8,18 +8,23 @@ module Hina
 
     def initialize
 
-      case Config[:stream]
-        when :stdout then logdev = STDOUT
-        else logdev = STDOUT
+      logdev = case Config[:stream]
+        when :stdout then STDOUT
+        when :to_file then
+          log_file = Config.has_key?(:log_file) ? Config[:log_file] : "#{APP_ROOT}/logs/hina.#{APP_ENVIRONMENT}.log"
+          file = open(log_file, 'a')
+          file.sync = true
+          file
+        else STDOUT
       end
 
-      case Config[:log_level]
-        when :debug then log_level = ::Logger::DEBUG
-        when :info  then log_level = ::Logger::INFO
-        when :warn  then log_level = ::Logger::WARN
-        when :error then log_level = ::Logger::ERROR
-        when :fatal then log_level = ::Logger::FATAL
-        else log_level = Logger::INFO
+      log_level = case Config[:log_level]
+        when :debug then ::Logger::DEBUG
+        when :info  then ::Logger::INFO
+        when :warn  then ::Logger::WARN
+        when :error then ::Logger::ERROR
+        when :fatal then ::Logger::FATAL
+        else ::Logger::INFO
       end
 
       @logger = Logger.new(logdev)
@@ -46,6 +51,30 @@ module Hina
       @logger.fatal(msg)
     end
 
+    def level
+      @logger.level
+    end
+
+    def debug?
+      @logger.level >= ::Logger::DEBUG
+    end
+
+    def info?
+      @logger.level >= ::Logger::INFO
+    end
+
+    def warn?
+      @logger.level >= ::Logger::WARN
+    end
+
+    def error?
+      @logger.level >= ::Logger::ERROR
+    end
+
+    def fatal?
+      @logger.level >= ::Logger::FATAL
+    end
+
     Config = {
       log_level: :warn,
       stream: :stdout
@@ -56,7 +85,7 @@ module Hina
 end
 
 module Kernel
-  def logs
+  def logging
     return Hina::Logging.instance
   end
 end

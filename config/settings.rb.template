@@ -1,0 +1,10 @@
+
+# ログ設定
+#Hina::Logging::Config[:log_level] = :debug
+#Hina::Logging::Config[:stream] = :to_file
+#Hina::Logging::Config[:log_file] = "#{APP_ROOT}/logs/hina.#{APP_ENVIRONMENT}.log"
+
+
+# DB設定
+Groonga::Database.open "#{APP_ROOT}/db/hina.db"
+

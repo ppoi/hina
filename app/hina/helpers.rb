@@ -55,6 +55,8 @@ module Hina
 
     module BBSHelper
       def get_dat(url, modified_since=nil)
+        p logging
+        p 'hogehgoe'
         if url.is_a? String
           url = URI.parse url
         end
@@ -65,7 +67,7 @@ module Hina
         res = http.start do |http|
           http.request(req)
         end
-        p "request to <#{url}>, return #{res.code}"
+        logging.debug "request to <#{url}>, return #{res.code}"
         if res.is_a? Net::HTTPOK
           res.body.encode(Encoding::UTF_8, Encoding::Windows_31J, :invalid=>:replace, :undef=>:replace)
         elsif res.is_a? Net::HTTPFound
@@ -109,13 +111,13 @@ module Hina
         end
   
         unless dat.nil?
-          p "Found: #{dat_url}"
+          logging.debug "Found: #{dat_url}"
           thread = parse_dat(thread_id, dat)
           thread.archived = dat_url.archived?
           thread.source_url = dat_url.thread_url.to_s
           thread
         else
-          p 'Not Modified' 
+          logging.debug 'Not Modified' 
           nil
         end
       end
