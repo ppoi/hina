@@ -333,7 +333,7 @@ module Hina
         thread.sync
       else
         latest = get_thread(thread.source_url, thread.lastpost_date)
-        if not latest.nil? and thread.archived != latest.archived and thread.post_count != latest.post_count
+        if not latest.nil? and (thread.archived != latest.archived or thread.post_count != latest.post_count)
           added_post_count = latest.post_count - thread.post_count
           if added_post_count > 0
             latest.posts[thread.post_count, added_post_count].each do |post|
