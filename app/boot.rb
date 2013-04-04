@@ -8,8 +8,7 @@ require 'bundler/setup'
 Bundler.require(:default, APP_ENVIRONMENT)
 
 require 'hina/logging'
-require 'hina/groonga'
 
 require "#{APP_ROOT}/config/settings"
 
-logging.info('Application boot process finished.')
+logging.info("Application boot process finished. environment=#{APP_ENVIRONMENT}")

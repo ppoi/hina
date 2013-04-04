@@ -1,5 +1,7 @@
 require 'json'
 
+Groonga::Database.open GROONGA_DB_PATH
+
 module Hina
 
   class Model

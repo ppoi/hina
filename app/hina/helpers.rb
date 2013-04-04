@@ -55,8 +55,6 @@ module Hina
 
     module BBSHelper
       def get_dat(url, modified_since=nil)
-        p logging
-        p 'hogehgoe'
         if url.is_a? String
           url = URI.parse url
         end

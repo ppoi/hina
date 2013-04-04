@@ -1,31 +1,25 @@
-APP_ROOT = File.dirname(__FILE__) unless defined? APP_ROOT
 
 task :environment, [:env] do |t, args|
   args.with_defaults :env=>'production'
 
   APP_ENVIRONMENT = args.env.to_sym unless defined?(APP_ENVIRONMENT)
-  APP_ROOT = File.dirname(__FILE__) unless defined? APP_ROOT
-
-  require 'rubygems'
-  require 'bundler/setup'
-  Bundler.require(:default, APP_ENVIRONMENT)
+  require File.expand_path('../app/boot', __FILE__)
 end
 
 namespace :grn do
-  dbpath = "#{APP_ROOT}/db/hina.db"
 
   namespace :db do
-    task :create => :environment do
-      dbdir = File.dirname(dbpath)
+    task :create, [:env] => :environment do
+      dbdir = File.dirname(GROONGA_DB_PATH)
       Dir.mkdir dbdir unless Dir.exists? dbdir    
       Groonga::Context.default_options = {encoding: :utf8}
-      Groonga::Database.create :path=>dbpath
+      Groonga::Database.create :path=>GROONGA_DB_PATH
     end
   end
 
   namespace :schema do
-    task :create => :environment do
-      Groonga::Database.open(dbpath)
+    task :create, [:env] => :environment do
+      Groonga::Database.open(GROONGA_DB_PATH)
       Groonga::Schema.define do |schema|
         schema.create_table :Post, :type=>:hash, :key_type=>'short_text' do |table|
           table.short_text :author
