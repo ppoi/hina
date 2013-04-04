@@ -1,5 +1,5 @@
 APP_ENVIRONMENT = :test
-require File.expand_path('../../hina', __FILE__)
+require File.expand_path('../../app/boot', __FILE__)
 
 def truncate_tables
   ['Thread','Post'].each do |table|
@@ -23,3 +23,4 @@ end
 def app
   Hina::Application
 end
+

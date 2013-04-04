@@ -1,8 +1,10 @@
 require 'spec_helper'
+require 'hina/models'
+require 'hina/helpers'
 
 module ModelSpec
   class Helpers
-    include Hina::ThreadHelper
+    include Hina::Helpers::BBSHelper
   end
 end
 

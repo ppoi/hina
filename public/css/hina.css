@@ -1,0 +1,23 @@
+.ui-li-desc { text-overflow:clip; white-space:normal; }
+.ui-li .ui-btn-text a.ui-link-inherit { text-overflow:clip; white-space:normal; padding:0.5em 15px; }
+.li-index { float:left; padding:8px 0px 0px 0px; text-align:right; font-size:12px; width:20px; max-width:30px; }
+.thread-date { margin-top:0.5em; }
+
+#threadview { padding:15px 5px; }
+.thread-header { font-size:10px; }
+.thread-header h1 { font-size:15px; line-height: 110%; }
+.post-count:after { content: "レス"; }
+.thread-period { font-size:10px; color:#444; padding-left: 0.5em; }
+.thread-created-date:after { content: "～"; }
+.post-header { margin:1em 0px; font-size:10px; font-weight:bold; border-top:solid 1px #DDD; padding-top:2px; }
+.post-header span { padding-right: 0.5em; }
+.post-number:after { content: ":" }
+.post-author { color:green; }
+.post-mail { font-weight: normal; }
+.post-mail:before { content:"[" }
+.post-mail:after { content:"]" }
+.post-date, .post-hash { color:#444; }
+.post-hash:before { content: "ID:" }
+.post-content { font-size:9px; line-height:100%; padding:10px; }
+.post { font-family:'MS PGothic', 'Arial', sans-serif, 'Osaka'; }
+

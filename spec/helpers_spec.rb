@@ -1,12 +1,13 @@
 require 'spec_helper'
+require 'hina/helpers'
 
 class HelperSpec
   class Helpers
-    include Hina::ThreadHelper
+    include Hina::Helpers::BBSHelper
   end
 end
 
-describe 'ThreadHelper' do
+describe 'Helpers' do
 
   let :helpers do
     HelperSpec::Helpers.new
@@ -15,7 +16,7 @@ describe 'ThreadHelper' do
   describe 'DatURL' do
     it 'create from source url' do
       source = 'http://ex14.vip2ch.com/test/read.cgi/news4ssnip/1364129784/'
-      url = Hina::ThreadHelper::DatURL.new(source)
+      url = Hina::DatURL.new(source)
       url.to_s.should eq 'http://ex14.vip2ch.com/news4ssnip/dat/1364129784.dat'
       url.thread_id.should eq '1364129784'
       url.board_name.should eq 'news4ssnip'
@@ -24,7 +25,7 @@ describe 'ThreadHelper' do
 
     it 'create archived url from source' do
       source = 'http://ex14.vip2ch.com/test/read.cgi/news4ssnip/1364129784/'
-      url = Hina::ThreadHelper::DatURL.new(source, true)
+      url = Hina::DatURL.new(source, true)
       url.to_s.should eq 'http://ex14.vip2ch.com/news4ssnip/kako/1364/13641/1364129784.dat'
       url.thread_id.should eq '1364129784'
       url.board_name.should eq 'news4ssnip'
@@ -33,7 +34,7 @@ describe 'ThreadHelper' do
 
     it 'create from mobile url' do
       source = 'http://ex14.vip2ch.com/i/response.html?bbs=news4ssnip&dat=1364129784'
-      url = Hina::ThreadHelper::DatURL.new(source)
+      url = Hina::DatURL.new(source)
       url.to_s.should eq 'http://ex14.vip2ch.com/news4ssnip/dat/1364129784.dat'
       url.thread_id.should eq '1364129784'
       url.board_name.should eq 'news4ssnip'
@@ -42,12 +43,12 @@ describe 'ThreadHelper' do
 
     it 'change to archived url' do
       source = 'http://ex14.vip2ch.com/test/read.cgi/news4ssnip/1364129784/'
-      url = Hina::ThreadHelper::DatURL.new(source)
+      url = Hina::DatURL.new(source)
       url.archived!.to_s.should eq 'http://ex14.vip2ch.com/news4ssnip/kako/1364/13641/1364129784.dat'
     end
   end
 
-  describe 'module methods' do
+  describe 'BBSHelper' do
     it 'parse dat' do
       dat = File.open("#{APP_ROOT}/spec/dat/1355062957.dat", "r") do |file|
         file.set_encoding(Encoding::SJIS, Encoding::UTF_8, :invalid=>:replace)
