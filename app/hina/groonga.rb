@@ -95,7 +95,7 @@ module Hina
             @values[attr] = value
           end
           @stored = true
-          @modified_attribtues = []
+          @modified_attributes = []
         end
       end
 
@@ -104,6 +104,7 @@ module Hina
       end
 
       def create
+        logging.debug("create #{self.class}[#{self.key}]")
         values = {}
         @values.each do |key, value|
           next if value.nil?
@@ -122,6 +123,7 @@ module Hina
       end
 
       def update
+        logging.debug("update #{self.class}[#{self.key}]")
         unless @modified_attributes.nil? or @modified_attributes.empty?
           record = self.class.table[key]
           @modified_attributes.each do |attr|
@@ -135,6 +137,7 @@ module Hina
               end
             end
             record[attr] = value
+            logging.debug("update #{self.class}[#{self.key}].#{attr}")
           end
         end
       end

@@ -27,8 +27,6 @@ describe 'Hina::Models' do
     end
 
     it 'can save(create) & load' do
-      Groonga[:Thread].has_key?('vip4ssnip1355062957').should be_false
-
       dat = File.open("#{APP_ROOT}/spec/dat/1355062957.dat", "r") do |file|
         file.set_encoding(Encoding::SJIS, Encoding::UTF_8, :invalid=>:replace)
         file.read
@@ -52,6 +50,24 @@ describe 'Hina::Models' do
         reloaded.posts[i].post_date.strftime('%Y/%m/%d %H:%M:%S.%-2L').should eq thread.posts[i].post_date.strftime('%Y/%m/%d %H:%M:%S.%-2L')
         reloaded.posts[i].contents.should eq thread.posts[i].contents
       end
+    end
+
+    it 'can save(update) & load' do
+      thread = Hina::Models::Thread.new('thread1', :title=>'スレッド1')
+      thread.add_post :author=>'「」', :post_date=>Time.local(2013,3,25,01,39,39,390000), :contents=>'レス1'
+      thread.save
+
+      thread = Hina::Models::Thread['thread1']
+      thread.should_not be_nil
+
+      thread.add_post :author=>'「」', :post_date=>Time.local(2013,3,25,02,39,39,390000), :contents=>'レス2'
+      thread.save
+
+      reload = Hina::Models::Thread['thread1']
+      reload.should_not be_nil
+      reload.post_count.should eq 2
+      reload.posts.should have(2).items
+      reload.lastpost_date.to_json.should eq '"2013/03/25 02:39:39.39"'
     end
 
     it 'can search' do

@@ -28,14 +28,18 @@ module Hina
       else
         latest = get_thread(thread.source_url, thread.lastpost_date)
         if not latest.nil? and (thread.archived != latest.archived or thread.post_count != latest.post_count)
+          logging.debug("Update!")
           added_post_count = latest.post_count - thread.post_count
           if added_post_count > 0
+            logging.debug("Add #{added_post_count} posts to #{thread.key}") if logging.debug?
             latest.posts[thread.post_count, added_post_count].each do |post|
+              logging.debug("add #{post.key}")
               post.save
             end
             thread.lastpost_date = latest.lastpost_date
             thread.post_count = latest.post_count
             thread.posts = latest.posts
+            logging.debug(thread.to_s)
           end
           thread.archived = latest.archived unless thread.archived == latest.archived
           thread.save
