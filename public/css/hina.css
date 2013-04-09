@@ -2,14 +2,13 @@
 .ui-li .ui-btn-text a.ui-link-inherit { font-size:12px; text-overflow:clip; white-space:normal; padding:0.5em 15px; }
 .li-index { float:left; padding:8px 0px 0px 0px; text-align:right; font-size:10px; width:20px; max-width:30px; }
 .thread-info { font-size:10px; margin-top:2px; line-height:110%; }
-.thread-info .thread-period { padding-left:0px; }
 
 #threadview { padding:15px 5px; }
 .thread-header { font-size:10px; }
 .thread-header h1 { font-size:15px; line-height: 110%; }
 .post-count:after { content: "レス"; }
 .post-archived { font-style:italic; }
-.thread-period { color:#444; padding-left: 0.5em; }
+.thread-period { color:#444; }
 .thread-created-date:after { content: "～"; }
 .post-header { margin:1em 0px; font-size:10px; font-weight:bold; border-top:solid 1px #DDD; padding-top:2px; }
 .post-header span { padding-right: 0.5em; }
@@ -23,3 +22,8 @@
 .post-content { font-size:9px; line-height:100%; padding:10px; }
 .post { font-family:'MS PGothic', 'Arial', sans-serif, 'Osaka'; }
 
+#threadview-log { font-size:8px; }
+.threadview-log-network:after { content:"[msec]"; }
+.threadview-log-network:before { content:"通信"; }
+.threadview-log-render:before { content:"描画"; padding-left:0.5em; }
+.threadview-log-render:after { content:"[msec]"; }
