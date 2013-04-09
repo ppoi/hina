@@ -30,14 +30,22 @@ function render_threadlist(condition) {
     dataType: 'json'
   }).done(function(data, textStatus, jqXHR) {
     var threadlist = $('#threadlist');
-    threadlist.html('<li data-role="list-divider">スレッド一覧<span class="ui-count">' + data.threadlist.length + '</span></li>');
+    threadlist.html('<li data-role="list-divider">スレッド一覧<span class="ui-li-count">' + data.threadlist.length + '</span></li>');
     for(var i = 0; i < data.threadlist.length; ++i) {
       var thread = data.threadlist[i];
       var item = $('<a/>', {href:'#thread:' + thread.key}).text(thread.title);
       if(thread.note) {
         item.append($('<p class="thread-note"/>').text(thread.note));
       }
-      item.append($('<p class="thread-date"/>').text(thread.created_date + ' ' + thread.lastpost_date));
+      var post_count_class = thread.archived ? 'post-count post-archived' : 'post-count';
+      item.append($('<p class="thread-info"/>').append(
+        $('<span class="' + post_count_class + '"/>').text(String(thread.post_count)),
+        $('<br/>'),
+        $('<span class="thread-period"/>').append(
+          $('<span class="thread-created-date"/>').text(thread.created_date),
+          $('<span class="thread-lastpost-date"/>').text(thread.lastpost_date)
+        ))
+      );
       threadlist.append($('<li><span class="li-index">' + (i+1) + '</span> </li>').append(item));
     }
     threadlist.listview('refresh');
