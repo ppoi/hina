@@ -98,17 +98,114 @@ describe 'Hina::Models' do
         record.posts.contents =~ '鏡音'
       end
       result.should have(3).items
+      result[0].key.should eq 'thread1'
+      result[0].posts.should_not be_nil
+      result[0].posts.should have(2).items
+      result[0].posts[0].key.should eq 'thread1:1'
+      result[0].posts[1].key.should eq 'thread1:2'
+      result[1].key.should eq 'thread2'
+      result[1].posts.should_not be_nil
+      result[1].posts.should have(2).items
+      result[1].posts[0].key.should eq 'thread2:1'
+      result[1].posts[1].key.should eq 'thread2:2'
+      result[2].key.should eq 'thread4'
+      result[2].posts.should_not be_nil
+      result[2].posts.should have(4).items
+      result[2].posts[0].key.should eq 'thread4:1'
+      result[2].posts[1].key.should eq 'thread4:2'
+      result[2].posts[2].key.should eq 'thread4:3'
+      result[2].posts[3].key.should eq 'thread4:4'
 
-      result = Hina::Models::Thread.select(:model_excludes=>[:posts, :tags]) do |record|
+      result = Hina::Models::Thread.select(:excludes=>[:posts]) do |record|
         record.posts.contents =~ '初音ミク'
       end
       result.should have(2).items
-      result.each do |record|
-        record.posts.should be_nil
-      end
+      result[0].key.should eq 'thread1'
+      result[0].posts.should be_nil
+      result[1].key.should eq 'thread4'
+      result[1].posts.should be_nil
 
       result = Hina::Models::Thread.select
       result.should have(4).items
+    end
+
+
+    it 'can sort' do
+      thread1 = Hina::Models::Thread.new('thread1', :title=>'スレッド1')
+      thread1.add_post :author=>'P', :post_date=>Time.local(2013,3,25,01,39,39,39000), :contents=>'初音ミク'
+      thread1.add_post :author=>'P', :post_date=>Time.local(2013,3,25,02,39,39,39000), :contents=>'鏡音リン'
+      save_thread thread1
+
+      thread2 = Hina::Models::Thread.new('thread2', :title=>'スレッド2')
+      thread2.add_post :author=>'P', :post_date=>Time.local(2013,3,25,03,39,39,39000), :contents=>'鏡音レン'
+      thread2.add_post :author=>'P', :post_date=>Time.local(2013,3,25,04,39,39,39000), :contents=>'巡音ルカ'
+      save_thread thread2
+
+      thread3 = Hina::Models::Thread.new('thread3', :title=>'スレッド3')
+      thread3.add_post :author=>'P', :post_date=>Time.local(2013,3,25,05,39,39,39000), :contents=>'KAITO'
+      thread3.add_post :author=>'P', :post_date=>Time.local(2013,3,25,06,39,39,39000), :contents=>'MEIKO'
+      save_thread thread3
+
+      thread4 = Hina::Models::Thread.new('thread4', :title=>'スレッド4')
+      thread4.add_post :author=>'P', :post_date=>Time.local(2013,3,25,01,39,39,39000), :contents=>'初音ミク'
+      thread4.add_post :author=>'P', :post_date=>Time.local(2013,3,25,02,39,39,39000), :contents=>'鏡音リン'
+      thread4.add_post :author=>'P', :post_date=>Time.local(2013,3,25,03,39,39,39000), :contents=>'鏡音レン'
+      thread4.add_post :author=>'P', :post_date=>Time.local(2013,3,25,02,39,39,39000), :contents=>'巡音ルカ'
+      save_thread thread4
+
+
+      result = Hina::Models::Thread.select(:sort=>[['created_date',:asc],['title',:desc]])
+      result.should have(4).items
+      result[0].key.should eq 'thread4'
+      result[1].key.should eq 'thread1'
+      result[2].key.should eq 'thread2'
+      result[3].key.should eq 'thread3'
+    end
+
+    it 'can limit' do
+      thread1 = Hina::Models::Thread.new('thread1', :title=>'スレッド1')
+      thread1.add_post :author=>'P', :post_date=>Time.local(2013,3,25,01,39,39,39000), :contents=>'初音ミク'
+      thread1.add_post :author=>'P', :post_date=>Time.local(2013,3,25,02,39,39,39000), :contents=>'鏡音リン'
+      save_thread thread1
+
+      thread2 = Hina::Models::Thread.new('thread2', :title=>'スレッド2')
+      thread2.add_post :author=>'P', :post_date=>Time.local(2013,3,25,03,39,39,39000), :contents=>'鏡音レン'
+      thread2.add_post :author=>'P', :post_date=>Time.local(2013,3,25,04,39,39,39000), :contents=>'巡音ルカ'
+      save_thread thread2
+
+      thread3 = Hina::Models::Thread.new('thread3', :title=>'スレッド3')
+      thread3.add_post :author=>'P', :post_date=>Time.local(2013,3,25,05,39,39,39000), :contents=>'KAITO'
+      thread3.add_post :author=>'P', :post_date=>Time.local(2013,3,25,06,39,39,39000), :contents=>'MEIKO'
+      save_thread thread3
+
+      thread4 = Hina::Models::Thread.new('thread4', :title=>'スレッド4')
+      thread4.add_post :author=>'P', :post_date=>Time.local(2013,3,25,01,39,39,39000), :contents=>'初音ミク'
+      thread4.add_post :author=>'P', :post_date=>Time.local(2013,3,25,02,39,39,39000), :contents=>'鏡音リン'
+      thread4.add_post :author=>'P', :post_date=>Time.local(2013,3,25,03,39,39,39000), :contents=>'鏡音レン'
+      thread4.add_post :author=>'P', :post_date=>Time.local(2013,3,25,02,39,39,39000), :contents=>'巡音ルカ'
+      save_thread thread4
+
+
+      result = Hina::Models::Thread.select(:offset=>1, :limit=>2)
+      result.should have(2).items
+      result[0].key.should eq 'thread2'
+      result[1].key.should eq 'thread3'
+
+      result = Hina::Models::Thread.select(:limit=>2)
+      result.should have(2).items
+      result[0].key.should eq 'thread1'
+      result[1].key.should eq 'thread2'
+
+      result = Hina::Models::Thread.select(:offset=>1)
+      result.should have(3).items
+      result[0].key.should eq 'thread2'
+      result[1].key.should eq 'thread3'
+      result[2].key.should eq 'thread4'
+
+      result = Hina::Models::Thread.select(:sort=>[['created_date',:asc],['title',:desc]], :offset=>1, :limit=>2)
+      result.should have(2).items
+      result[0].key.should eq 'thread1'
+      result[1].key.should eq 'thread2'
     end
   end
 end

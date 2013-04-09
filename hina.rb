@@ -13,13 +13,30 @@ module Hina
 
 
     get '/thread' do
-      threadlist = Hina::Models::Thread.select(:model_excludes=>[:posts])
+      logging.debug(params)
+      options = {:excludes=>[:posts]}
+      options[:sort] = [[params[:sort],:asc]] if params[:sort]
+      keyword = params[:keyword]
+      archived = params[:archived] == 'true'
+      threadlist = Hina::Models::Thread.select(options) do |record|
+        keyword_cond = ((record.title =~ keyword) | (record.posts.contents =~ keyword)) unless keyword.nil? or keyword.empty?
+        archived_cond = (record.archived == false) unless archived
+        if keyword_cond.nil? and archived_cond.nil?
+          record
+        elsif keyword_cond.nil?
+          archived_cond
+        elsif archived_cond.nil?
+          keyword_cond
+        else
+          archived_cond  & keyword_cond
+        end
+      end
       json :count=>threadlist.size, :threadlist=>threadlist
     end
 
     get '/thread/:thread_id' do
       thread_id = params[:thread_id]
-      thread = Hina::Models::Thread[thread_id, :model_excludes=>[:posts]]
+      thread = Hina::Models::Thread[thread_id, :excludes=>[:posts]]
       if thread.nil?
         404
       end

@@ -21,17 +21,16 @@ function handle_pagebeforechange(event, data) {
 }
 
 var threadlist_initialized = false;
-function handle_threadlist_pageshow(event, data) {
-  if(threadlist_initialized) {
-    return;
-  }
 
+function render_threadlist(condition) {
   $.mobile.loading('show', { text:'Loading', textVisible:true });
   $.ajax('thread', {
     type: 'GET',
+    data: condition,
     dataType: 'json'
   }).done(function(data, textStatus, jqXHR) {
     var threadlist = $('#threadlist');
+    threadlist.html('<li data-role="list-divider">スレッド一覧<span class="ui-count">' + data.threadlist.length + '</span></li>');
     for(var i = 0; i < data.threadlist.length; ++i) {
       var thread = data.threadlist[i];
       var item = $('<a/>', {href:'#thread:' + thread.key}).text(thread.title);
@@ -47,6 +46,33 @@ function handle_threadlist_pageshow(event, data) {
   }).fail(function(jqXHR, textStatus, errorThrown) {
     window.alert(errorThrown);
   });
+
+}
+
+function handle_threadsearch_submit(event) {
+  event.preventDefault();
+
+  var keyword = $('#threadsearch-keyword').val(),
+      archived = ($('#threadsearch-archived').val() == 'true'),
+      sort = $('#threadsearch-sort input:checked').val();
+
+  $('#threadsearch-form').trigger('collapse');
+  $.mobile.silentScroll();
+  render_threadlist({
+    keyword: keyword,
+    archived: archived,
+    sort: sort
+  });
+
+  return false;
+}
+
+function handle_threadlist_pageshow(event, data) {
+  if(threadlist_initialized) {
+    return;
+  }
+
+  render_threadlist();
 }
 
 function handle_thread_pagebeforeshow(event, dat) {
@@ -118,6 +144,7 @@ $(document).on("mobileinit", function(){
   $(document).ready(function(event) {
     $(document).on("pagebeforechange", handle_pagebeforechange);
     $('div#main').on("pageshow", handle_threadlist_pageshow);
+    $('form#threadsearch').on('submit', handle_threadsearch_submit);
     $('div#thread').on('pagebeforeshow', handle_thread_pagebeforeshow)
         .on('pageshow', handle_thread_pageshow);
     $('form#registerForm').on('submit', handle_registerForm_submit);

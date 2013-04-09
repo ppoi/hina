@@ -43,6 +43,9 @@ module Hina
     end
 
     module ClassMethods
+      LoadOptions = [:includes, :excludes]
+      SelectOptions = [:sort, :offset, :limit]
+
       attr_reader :table, :attributes
 
       def [](key, options={})
@@ -51,9 +54,18 @@ module Hina
       end
 
       def select(options={}, &block)
-        groonga_options = options.reject {|k,v| k.to_s.start_with?('model_')}
-        table.select(groonga_options, &block).map do |record|
-          new(record, options)
+        sort_keys = options.has_key?(:sort) ? options.delete(:sort) : ['_id']
+        sort_options = {
+          :offset => options.delete(:offset),
+          :limit => options.delete(:limit)
+        }
+        load_options = {
+          :includes=>options.delete(:includes),
+          :excludes=>options.delete(:excludes)
+        }
+        resultset = table.select(options, &block)
+        resultset.sort(sort_keys, sort_options).map do |record|
+          new(record, load_options)
         end
       end
     end
@@ -78,8 +90,8 @@ module Hina
         unless record.nil?
           @key = record._key
           @values = {}
-          target_attributes = options[:model_includes] || self.class.attributes
-          target_attributes -= options[:model_excludes] if options.has_key?(:model_excludes)
+          target_attributes = options[:includes] || self.class.attributes
+          target_attributes -= options[:excludes] if options[:excludes]
           target_attributes.each do |attr|
             column = self.class.table.column(attr)
             next if column.index?
