@@ -84,6 +84,7 @@ function handle_threadlist_pageshow(event, data) {
 
 function handle_thread_pagebeforeshow(event, dat) {
   $('#threadview').empty();
+  document.title = 'ヒナ';
 }
 
 function render_thread_posts(posts, threadview) {
@@ -142,6 +143,7 @@ function handle_thread_pageshow(event, dat) {
     var lap3 = new Date();
     var renderCost = lap3.getTime() - lap2.getTime();
     log.append($('<span class="threadview-log-render"/>').text(renderCost));
+    document.title = data.title;
     $.mobile.silentScroll();
     $.mobile.loading('hide');
   }).fail(function(jqXHR, textStatus, errorThrown) {
