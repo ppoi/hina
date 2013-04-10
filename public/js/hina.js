@@ -37,7 +37,7 @@ function render_threadlist(condition) {
     dataType: 'json'
   }).done(function(data, textStatus, jqXHR) {
     var threadlist = $('#threadlist');
-    threadlist.html('<li data-role="list-divider">スレッド一覧<span class="ui-li-count">' + data.threadlist.length + '</span></li>');
+    threadlist.html('<li data-role="list-divider">スレッド一覧<span class="ui-li-count">' + data.count + '/' + data.total + '</span></li>');
     for(var i = 0; i < data.threadlist.length; ++i) {
       var thread = data.threadlist[i];
       var item = $('<a/>', {href:'#thread:' + thread.key}).text(thread.title);

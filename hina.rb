@@ -35,7 +35,7 @@ module Hina
           archived_cond  & keyword_cond
         end
       end
-      json :count=>threadlist.size, :threadlist=>threadlist
+      json :total=>Hina::Models::Thread.table.size, :count=>threadlist.size, :threadlist=>threadlist
     end
 
     get '/thread/:thread_id' do
