@@ -14,10 +14,14 @@ module Hina
 
     get '/thread' do
       logging.debug(params)
-      options = {:excludes=>[:posts]}
-      options[:sort] = [[params[:sort],:asc]] if params[:sort]
       keyword = params[:keyword]
       archived = params[:archived] == 'true'
+      sort_key = params[:sort]
+      sort_dir = params[:sort_dir]
+
+      options = {:excludes=>[:posts], :sort=>[['_id', :desc]]}
+      options[:sort][0][0] = sort_key unless sort_key.nil? or sort_key.empty?
+      options[:sort][0][1] = sort_dir.to_sym unless sort_dir.nil? or sort_dir.empty?
       threadlist = Hina::Models::Thread.select(options) do |record|
         keyword_cond = ((record.title =~ keyword) | (record.posts.contents =~ keyword)) unless keyword.nil? or keyword.empty?
         archived_cond = (record.archived == false) unless archived

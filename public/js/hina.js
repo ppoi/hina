@@ -23,6 +23,13 @@ function handle_pagebeforechange(event, data) {
 var threadlist_initialized = false;
 
 function render_threadlist(condition) {
+  var condition = {
+    keyword:  $('#threadsearch-keyword').val(),
+    archived: ($('#threadsearch-archived').val() == 'true'),
+    sort: $('#threadsearch-sort input:checked').val(),
+    sort_dir: $('#threadsearch-sort-dir').val()
+  };
+
   $.mobile.loading('show', { text:'Loading', textVisible:true });
   $.ajax('thread', {
     type: 'GET',
@@ -60,17 +67,9 @@ function render_threadlist(condition) {
 function handle_threadsearch_submit(event) {
   event.preventDefault();
 
-  var keyword = $('#threadsearch-keyword').val(),
-      archived = ($('#threadsearch-archived').val() == 'true'),
-      sort = $('#threadsearch-sort input:checked').val();
-
   $('#threadsearch-form').trigger('collapse');
   $.mobile.silentScroll();
-  render_threadlist({
-    keyword: keyword,
-    archived: archived,
-    sort: sort
-  });
+  render_threadlist();
 
   return false;
 }

@@ -34,14 +34,18 @@
             </select>
             <div data-role="collapsible" data-content-theme="e">
               <h4>ソート順</h4>
-            <fieldset data-role="controlgroup" data-type="vertical" id="threadsearch-sort">
-              <input type="radio" name="threadsearch-sort" id="threadsearch-sort-1" value="_id" checked>
-              <label for="threadsearch-sort-1">登録順</label>
-              <input type="radio" name="threadsearch-sort" id="threadsearch-sort-2" value="created_date">
-              <label for="threadsearch-sort-2">作成日時順</label>
-              <input type="radio" name="threadsearch-sort" id="threadsearch-sort-3" value="lastpost_date">
-              <label for="threadsearch-sort-3">更新日時順</label>
-            </fieldset>
+              <select id="threadsearch-sort-dir" data-role="slider">
+                <option value="asc">↑</option>
+                <option value="desc" selected>↓</option>
+              </select>
+              <fieldset data-role="controlgroup" data-type="vertical" id="threadsearch-sort">
+                <input type="radio" name="threadsearch-sort" id="threadsearch-sort-1" value="_id">
+                <label for="threadsearch-sort-1">登録順</label>
+                <input type="radio" name="threadsearch-sort" id="threadsearch-sort-2" value="created_date">
+                <label for="threadsearch-sort-2">作成日時順</label>
+                <input type="radio" name="threadsearch-sort" id="threadsearch-sort-3" value="lastpost_date" checked>
+                <label for="threadsearch-sort-3">更新日時順</label>
+              </fieldset>
             </div>
             <button id="threadsearch-go" data-theme="b">検索</button>
           </form>
