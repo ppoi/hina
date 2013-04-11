@@ -61,6 +61,34 @@ describe 'Helpers' do
       thread.posts.should have(1000).items
     end
 
+    it 'parse dat(include empty res)' do
+      dat = File.open("#{APP_ROOT}/spec/dat/1358944586.dat", "r") do |file|
+        file.set_encoding(Encoding::SJIS, Encoding::UTF_8, :invalid=>:replace)
+        file.read
+      end
+      thread = helpers.parse_dat('vip4ssnip1355062957', dat)
+      thread.title.should eq "【咲SS】京太郎「太陽はまた昇る」照「京ちゃん！×2、牛乳プリンおいしいよ」"
+      thread.posts[0].author.should eq '◆/cZ9NqabwE'
+      thread.posts[0].post_date.strftime('%Y/%m/%d %H:%M:%S.%-2L').should eq "2013/01/23 21:36:27.14"
+      thread.posts[1].contents.should eq '立て乙ー'
+      thread.posts[427].contents.should eq ''
+      thread.posts.should have(1000).items
+    end
+
+    it 'parse dat(include mover res)' do
+      dat = File.open("#{APP_ROOT}/spec/dat/1283691129.dat", "r") do |file|
+        file.set_encoding(Encoding::SJIS, Encoding::UTF_8, :invalid=>:replace)
+        file.read
+      end
+      thread = helpers.parse_dat('news4ssnip:1283691129', dat)
+      thread.title.should eq '幼女「お茶くださいな」２'
+      thread.posts[0].author.should eq '◆Nazrh/2nXQ'
+      thread.posts[0].post_date.strftime('%Y/%m/%d %H:%M:%S.%-2L').should eq "2010/09/05 21:52:09.92"
+      thread.posts[862].author_hash.should eq '移転'
+      thread.posts.should have(1000).items
+    end
+
+
     it 'get dat', :if=>false do
       url = helpers.get_dat_url('http://ex14.vip2ch.com/test/read.cgi/news4ssnip/1362052790/')
       dat = helpers.get_dat(url, Time.now)

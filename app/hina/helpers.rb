@@ -80,7 +80,7 @@ module Hina
       def parse_dat(thread_id, dat)
         thread = nil
         dat.each_line do |line|
-          fragments = line.split /\s*<>\s*/
+          fragments = line.split /\s*<>\s*/, 5
           raise Hina::InvalidDatFormatError.new "#{fragments.to_s}/#{thread.posts.size}" if fragments.size < 4
   
           thread = Hina::Models::Thread.new(thread_id, title:fragments[-1].strip!) if thread.nil?
@@ -90,8 +90,10 @@ module Hina
             post[:author_hash] = $8
           elsif thread.posts.size >= 1000
             break
+          elsif fragments[2] == '移転'
+            post[:author_hash] = '移転'
           else
-            raise Hina::InvalidDatFormatError.new fragments.to_s
+            raise Hina::InvalidDatFormatError.new "#{fragments.to_s}/#{thread.posts.size}"
           end
           thread.add_post post
         end
