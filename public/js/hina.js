@@ -115,6 +115,7 @@ function handle_thread_pageshow(event, dat) {
   $.mobile.loading('show', { text:'Loading', textVisible:true });
   var lap1 = new Date();
   $.ajax('thread/' + thread_id, {
+    data: standalone ? { standalone: standalone } : null
   }).done(function(data, textStatus, jqXHR) {
     var lap2 = new Date();
     var networkCost = lap2.getTime() - lap1.getTime();
@@ -200,6 +201,7 @@ function handle_registerForm_submit(event) {
   return false;
 }
 
+var standalone = false;
 $(document).on("mobileinit", function(){
   $(document).ready(function(event) {
     $(document).on("pagebeforechange", handle_pagebeforechange);

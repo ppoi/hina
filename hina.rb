@@ -40,11 +40,12 @@ module Hina
 
     get '/thread/:thread_id' do
       thread_id = params[:thread_id]
+      standalone = params[:standalone] == 'true'
       thread = Hina::Models::Thread[thread_id, :excludes=>[:posts]]
       if thread.nil?
         404
       end
-      if thread.archived
+      if thread.archived or standalone
         thread.sync
       else
         latest = get_thread(thread.source_url, thread.lastpost_date)
@@ -60,7 +61,6 @@ module Hina
             thread.lastpost_date = latest.lastpost_date
             thread.post_count = latest.post_count
             thread.posts = latest.posts
-            logging.debug(thread.to_s)
           end
           thread.archived = latest.archived unless thread.archived == latest.archived
           thread.save
