@@ -201,7 +201,6 @@ function handle_registerForm_submit(event) {
 }
 
 $(document).on("mobileinit", function(){
-  $.mobile.defaultPageTransition = 'none';
   $(document).ready(function(event) {
     $(document).on("pagebeforechange", handle_pagebeforechange);
     $('div#main').on("pageshow", handle_threadlist_pageshow);
