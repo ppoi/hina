@@ -102,12 +102,14 @@ function render_thread_posts(posts, threadview) {
 }
 
 function handle_thread_pageshow(event, dat) {
-  var url = $.mobile.path.parseUrl(location.href);
-  var match = /#thread:([^&]+)/.exec(url.hash);
-  var thread_id = match[1];
-  var page = $(event.target);
-  var view = $('#threadview');
-  var log = $('#threadview-log');
+  var url = $.mobile.path.parseUrl(location.href),
+      match = /#thread:([^&]+)/.exec(url.hash),
+      thread_id = match[1],
+      page = $(event.target),
+      view = $('#threadview'),
+      standalone = $('#setting-standalone').val() == 'true',
+      log = $('#threadview-log');
+
   if(log.length == 0) {
     log = $('<div id="threadview-log">').appendTo(view);
   }
@@ -201,12 +203,12 @@ function handle_registerForm_submit(event) {
   return false;
 }
 
-var standalone = false;
 $(document).on("mobileinit", function(){
   $(document).ready(function(event) {
     $(document).on("pagebeforechange", handle_pagebeforechange);
     $('div#main').on("pageshow", handle_threadlist_pageshow);
     $('form#threadsearch').on('submit', handle_threadsearch_submit);
+
     $('div#thread').on('pagebeforeshow', handle_thread_pagebeforeshow)
         .on('pageshow', handle_thread_pageshow);
     $('div#thread-pointer form').on('submit', handle_threadPointer_submit);
