@@ -1,0 +1,61 @@
+<!DOCTYPE html><html><head><title>threadsearch</title><meta http-equiv="content-type" content="text/html" charset="UTF-8"></head><body>
+
+<div id="threadsearch" data-role="page" data-theme="e" data-title="ヒナ: スレ一覧">
+  <div data-role="header" data-theme="a" data-position="fixed">
+    <div data-role="navbar" data-iconpos="bottom">
+      <ul>
+        <li><a href="#register" data-icon="plus">Register</a></li>
+        <li><a href="#search" data-icon="search">Search</a>
+        <li><a href="#settings" data-icon="gear">Settings</a>
+      </ul>
+    </div>
+</div>
+<div data-role="content">
+    <div id="threadsearch-form" data-role="collapsible" data-content-theme="c">
+      <h3 id="threadsearch-heading">検索条件</h3>
+      <form id="threadsearchForm">
+        <label for="threadsearch-keyword" class="ui-hidden-accessible">キーワード</label>
+        <input id="threadsearch-keyword" type="search" placeholder="キーワード">
+        <label for="threadsearch-archived">過去ログ</label>
+        <select id="threadsearch-archived" data-role="slider">
+          <option value="false">なし</option>
+          <option value="true">あり</option>
+        </select>
+        <div data-role="collapsible" data-content-theme="e">
+          <h4>ソート順</h4>
+          <select id="threadsearch-sort-dir" data-role="slider">
+            <option value="asc">↑</option>
+            <option value="desc" selected>↓</option>
+          </select>
+          <fieldset data-role="controlgroup" data-type="vertical" id="threadsearch-sort">
+            <input type="radio" name="threadsearch-sort" id="threadsearch-sort-1" value="_id">
+            <label for="threadsearch-sort-1">登録順</label>
+            <input type="radio" name="threadsearch-sort" id="threadsearch-sort-2" value="created_date">
+            <label for="threadsearch-sort-2">作成日時順</label>
+            <input type="radio" name="threadsearch-sort" id="threadsearch-sort-3" value="lastpost_date" checked>
+            <label for="threadsearch-sort-3">更新日時順</label>
+          </fieldset>
+        </div>
+        <button id="threadsearch-go" data-theme="b">検索</button>
+      </form>
+    </div>
+    <ul id="threadlist" data-role="listview" data-inset="true" data-theme="c" data-divider-theme="c">
+      <li data-role="list-divider">スレ一覧</li>
+    </ul>
+  </div>
+</div>
+<div id="register" data-role="page" data-theme="e" data-title="ヒナ: スレ登録">
+  <div data-role="header">
+    <a data-rel="back">Cancel</a>
+    <h1>登録</h1>
+  </div>
+  <div data-role="content">
+    <form id="registerForm">
+      <label for="register-sourceUrl" class="ui-hidden-accessible">URL</label>
+      <input id="register-sourceUrl" type="text" placeholder="スレッドのURL" />
+      <input type="submit" value="登録" />
+    </form>
+  </div>
+</div>
+
+

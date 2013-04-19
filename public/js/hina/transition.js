@@ -203,15 +203,3 @@ function handle_registerForm_submit(event) {
   return false;
 }
 
-$(document).on("mobileinit", function(){
-  $(document).on("pagebeforechange", handle_pagebeforechange);
-  $('div#main').on("pageshow", handle_threadlist_pageshow);
-  $('form#threadsearch').on('submit', handle_threadsearch_submit);
-  $('div#thread').on('pagebeforeshow', handle_thread_pagebeforeshow)
-      .on('pageshow', handle_thread_pageshow);
-  $('div#thread-pointer form').on('submit', handle_threadPointer_submit);
-  $('div#thread-pointer').on('popupafterclose', handle_threadPointer_afterclose);
-  $('form#registerForm').on('submit', handle_registerForm_submit);
-});
-
-
