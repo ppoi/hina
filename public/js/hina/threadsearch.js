@@ -4,17 +4,19 @@ var ThreadSearchPage = controller.extend_page(function(page_id) {
   this.__super__.constructor.apply(this, arguments);
   this.threadlist_initialized = false;
 });
+ThreadSearchPage.prototype.setup_handlers = function(page) {
+  $('#threadsearch-form').on('submit', $.proxy(function(event) {
+    $('#threadsearch-formbox').trigger('collapse');
+    $.mobile.silentScroll();
+    this.execute_threadsearch();
+    return false;
+  }, this));
+};
 ThreadSearchPage.prototype.handle_pageshow = function(event ,data) {
   if(this.threadlist_initialized) {
     return;
   }
   this.execute_threadsearch();
-};
-ThreadSearchPage.prototype.handle_threadsearch_submit = function(event) {
-  $('#threadsearch-form').trigger('collapse');
-  $.mobile.silentScroll();
-  this.execute_threadsearch();
-  return false;
 };
 ThreadSearchPage.prototype.execute_threadsearch = function() {
   var condition = {
@@ -29,7 +31,7 @@ ThreadSearchPage.prototype.execute_threadsearch = function() {
     type: 'GET',
     data: condition,
     dataType: 'json'
-  }).done(function(data, textStatus, jqXHR) {
+  }).done($.proxy(function(data, textStatus, jqXHR) {
     var threadlist = $('#threadlist');
     threadlist.html('<li data-role="list-divider">スレッド一覧<span class="ui-li-count">' + data.count + '/' + data.total + '</span></li>');
     for(var i = 0; i < data.threadlist.length; ++i) {
@@ -52,11 +54,11 @@ ThreadSearchPage.prototype.execute_threadsearch = function() {
     threadlist.listview('refresh');
     $.mobile.loading('hide');
     this.threadlist_initialized = true;
-  }).fail(function(jqXHR, textStatus, errorThrown) {
+  }, this)).fail(function(jqXHR, textStatus, errorThrown) {
     window.alert(errorThrown);
   });
 };
 
 
-controller.register(/^threadsearch/, ThreadSearchPage);
+controller.register(/^(threadsearch)$/, ThreadSearchPage);
 });

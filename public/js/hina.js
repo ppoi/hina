@@ -6,33 +6,23 @@ requirejs.config({
   },
   shim: {
     'jquery.mobile': {
-      deps: ['jquery', 'boot']
-    },
-   'transition': {
-      deps: ['jquery']
+      deps: ['jquery', 'hina']
     }
   }
 });
 
-define('boot', ['require', 'jquery', 'transition'], function(require, $) {
+define('hina', ['require', 'jquery'], function(require, $) {
   var setup_deferred = $.Deferred(),
       setup_promise = setup_deferred.promise();
-  require(['threadsearch'], function() {
-    alert('initialized!');
+  require(['threadsearch', 'thread', 'register', 'settings'], function() {
     setup_deferred.resolve();
   });
   $(document).on("mobileinit", function() {
     $('#welcome').on('pageshow', function() {
       setup_promise.done(function() {
-        $.mobile.changePage('#threadsearch');
+        $.mobile.changePage(location.href);
       });
     });
-
-    $('div#thread').on('pagebeforeshow', handle_thread_pagebeforeshow)
-        .on('pageshow', handle_thread_pageshow);
-    $('div#thread-pointer form').on('submit', handle_threadPointer_submit);
-    $('div#thread-pointer').on('popupafterclose', handle_threadPointer_afterclose);
-    $('form#registerForm').on('submit', handle_registerForm_submit);
   });
 });
 require(['jquery.mobile']);
