@@ -1,20 +1,6 @@
 define(['jquery', 'controller'], function($, controller) {
 
-var ThreadPage = controller.extend_page(function(page_id, thread_id) {
-  this.__super__.constructor.apply(this, arguments);
-  this.thread_id = thread_id;
-  this.hash = '#thread:' + thread_id;
-  this.template_id = 'thread';
-});
-ThreadPage.prototype.ensure_page = function() {
-  var page = $('#thread');
-  if(page.length) {
-    this.setup_pageevent_handlers(page);
-    this.setup_handlers(page);
-    this.page = page;
-  }
-  return this.__super__.ensure_page.apply(this, arguments);
-};
+var ThreadPage = controller.extend_page();
 ThreadPage.prototype.setup_handlers = function(page) {
   $('#thread-pointer-form', page).on('submit', function() {
     $('#thread-pointer').popup('close');
@@ -68,10 +54,6 @@ ThreadPage.prototype.handle_pageshow = function(event, dat) {
     window.alert(errorThrown);
   });
 };
-ThreadPage.prototype.handle_pagehide = function() {
-  this.page.off('pagebeforeshow pageshow pagehide');
-  $('#thread-pointer-form').off('submit');
-};
 ThreadPage.prototype.render_thread_posts = function(posts, threadview) {
   for(var i = 0, len = posts.length; i < len; ++i) {
     var post = posts[i];
@@ -101,6 +83,12 @@ ThreadPage.prototype.scroll_to_response = function() {
     }
   }
 };
+ThreadPage.prototype.transition = function(options) {
+  var match = /^thread:(.+)/.exec(options.originalHash);
+  this.thread_id = match[1];
+  this.hash = options.originalHash;
+  this.__super__.transition.apply(this, arguments);
+};
 
-controller.register(/^(thread:(.+))$/, ThreadPage);
+controller.register(/^(thread):.+$/, ThreadPage);
 });

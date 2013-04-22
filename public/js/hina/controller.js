@@ -153,6 +153,7 @@ Controller.prototype.start = function() {
       if(match) {
         match.shift();
         page = this.page_cache.get(match[0]) || this.page_cache.add(this.create_page(path, match));
+        options.originalHash = hash;
         page.transition(options);
         event.preventDefault();
         break;
