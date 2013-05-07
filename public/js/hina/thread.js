@@ -2,11 +2,12 @@ define(['jquery', 'controller'], function($, controller) {
 
 var ThreadPage = controller.extend_page();
 ThreadPage.prototype.setup_handlers = function(page) {
-  $('#thread-pointer-form', page).on('submit', function() {
-    $('#thread-pointer').popup('close');
+  $('#thread-pointer-form', page).on('submit', $.proxy(function() {
+    $('#thread-pointer', page)
+      .one('popupafterclose', $.proxy(this.scroll_to_response, this))
+      .popup('close');
     return false;
-  });
-  $('#thread-pointer', page).on('popupafterclose', $.proxy(this.scroll_to_response, this));
+  }, this)); 
 };
 ThreadPage.prototype.handle_pagebeforeshow = function(event, dat) {
   $('#threadview').empty();
