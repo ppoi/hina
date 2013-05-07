@@ -11,6 +11,11 @@ ThreadSearchPage.prototype.setup_handlers = function(page) {
     this.execute_threadsearch();
     return false;
   }, this));
+  $('a[href="#search"]', page).on('click', $.proxy(function(event) {
+    $('#threadsearch-formbox').trigger('expand');
+    $.mobile.silentScroll();
+    return false;
+  }, this));
 };
 ThreadSearchPage.prototype.handle_pageshow = function(event ,data) {
   if(this.threadlist_initialized) {
