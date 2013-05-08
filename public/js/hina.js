@@ -22,6 +22,8 @@ define('hina', ['require', 'jquery'], function(require, $) {
       setup_promise.done(function() {
         $.mobile.changePage(location.href);
       });
+    }).on('pagehide', function(event, data) {
+      $.mobile.firstPage = data.nextPage;
     });
   });
 });
